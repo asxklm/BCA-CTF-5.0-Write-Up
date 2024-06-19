@@ -20,20 +20,115 @@ Welcome to the BCA CTF 5.0 Write-Up! This document details the solutions for the
 8. [Sea Scavenger (forensic)](#sea-scavenger-forensic)
 
 ## Inaccessible (binex)
-### Description
-Decompile the binary and call the `win` function to get the flag.
+### Deskripsi
+Melakukan analisis menggunakkan decompiler online, kami menggunakkan [Decompiler Explorer](https://dogbolt.org/) lalu menemukan program hasil compile dalam file tersebut
 
-### Solution
+### dekompile menggunakkan Ghidra
 ```c
-void win(void) {
-    // Function to print the flag
+undefined8 main(void)
+
+{
+  puts("No flag for you >:(");
+  return 0;
+}
+
+void win(void)
+
+{
+  long lVar1;
+  char cVar2;
+  char cVar3;
+  int iVar4;
+  void *pvVar5;
+  byte local_58 [48];
+  long local_28;
+  int local_1c;
+  
+  pvVar5 = (void *)0x0;
+  memset(local_58,0,0x28);
+  for (local_1c = 0; local_1c < 0x25; local_1c = local_1c + 1) {
+    lVar1 = *(long *)(b + (long)local_1c * 8);
+    iVar4 = f(local_1c + 1);
+    local_28 = lVar1 / (long)iVar4;
+    cVar3 = f((int)(char)i2[local_1c]);
+    cVar2 = (char)local_28;
+    iVar4 = c((void *)(ulong)(uint)(int)(char)i4[local_1c],pvVar5);
+    local_58[local_1c] = (char)iVar4 + cVar3 + cVar2;
+    local_58[local_1c] = ~local_58[local_1c];
+  }
+  puts((char *)local_58);
+  return;
 }
 ```
 
-### Flag
+<br>Melanjutkan menggunakkan tools GDB dan melakukan pemangilan fungsi win. Lalu kita lihat perakitan fungsi _start.
+
+### _start
+```c
+  //
+                             // .text 
+                             // SHT_PROGBITS  [0x400440 - 0x400741]
+                             // ram:00400440-ram:00400741
+                             //
+                             **************************************************************
+                             *                          FUNCTION                          *
+                             **************************************************************
+                             undefined processEntry _start()
+             undefined         AL:1           <RETURN>
+             undefined8        Stack[-0x10]:8 local_10                                XREF[1]:     0040044e(*)  
+                             _start                                          XREF[5]:     Entry Point(*), 00400018(*), 
+                                                                                          0040077c, 004007d8(*), 
+                                                                                          _elfSectionHeaders::00000310(*)  
+        00400440 31 ed           XOR        EBP,EBP
+        00400442 49 89 d1        MOV        R9,RDX
+        00400445 5e              POP        RSI
+        00400446 48 89 e2        MOV        RDX,RSP
+        00400449 48 83 e4 f0     AND        RSP,-0x10
+        0040044d 50              PUSH       RAX
+        0040044e 54              PUSH       RSP=>local_10
+        0040044f 49 c7 c0        MOV        R8,__libc_csu_fini
+                 40 07 40 00
+        00400456 48 c7 c1        MOV        RCX,__libc_csu_init
+                 d0 06 40 00
+        0040045d 48 c7 c7        MOV        RDI,main
+                 b8 06 40 00
+        00400464 e8 b7 ff        CALL       <EXTERNAL>::__libc_start_main                    undefined __libc_start_main()
+                 ff ff
+        00400469 f4              HLT
+        0040046a 66              ??         66h    f
+        0040046b 0f              ??         0Fh
+        0040046c 1f              ??         1Fh
+        0040046d 44              ??         44h    D
+        0040046e 00              ??         00h
+        0040046f 00              ??         00h
 ```
-bcactf{W0w_Y0u_m4d3_iT_b810c453a9ac9}
+
+<br>kami melakukan perubahan pada alamat 0x4006b8 dari fungsi utama yang akan dipanggil. Alamat fungsi win adalah 0x4005ea, jadi tulis ulang bagian yang sesuai menjadi ea 05 40 00 dan jalankan. 
+
+### Ubah alamat
+```bin 
+0040045d 48 c7 c7        MOV        RDI,main
+                 b8 06 40 00
 ```
+
+### Menjalankan program
+```bin 
+$ ./chall_mod
+```
+
+dan didapati flagnya **bcactf{W0w_Y0u_m4d3_iT_b810c453a9ac9}**
+
+## Time Skip (crypto)
+### Deskripsi
+Melakukan analisis dengan mudah via bantuan chatgpt untuk menentukan algoritma kiptografi yang digunakan. Sebenarnya kita dapat menemukan langsung flagnya dikarenakan diberikan langsung pada ciphertextnya.
+
+### Flag (ciphertext)
+``` 
+heyguysimkindoflostprobablynotgoingtosurvivemuchlongertobehonestbutanywaystheflagisbcactf{5c7t4l3_h15t04y_qe829xl1}pleasesendhelpimeanbythetimeyouseethisiveprobablybeendeadforthousandsofyearsohwellseeyoulaterisupposebyee
+```
+
+<br>Didapati algoritma yang digunakan adalah algoritma Scytale, kami menggunakkan [online decoder](https://www.dcode.fr/scytale-cipher) 
+didapati flagnya **bcactf{5c7t4l3_h15t04y_qe829xl1}**
 
 ## Tic-Tac-Toe (webex)
 ### Description
